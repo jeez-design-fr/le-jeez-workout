@@ -117,7 +117,7 @@
         
         .instructions-box span { color: var(--neon-green); font-weight: bold; }
 
-    /* MODULE 1 : CHRONO REST // STYLISÉ CYBERPUNK // V3 */
+    /* MODULE 1 : CHRONO REST // STYLISÉ CYBERPUNK // V3.2 */
         .hud-box.timer {
             border-color: var(--neon-purple);
             padding: 15px;
@@ -169,7 +169,7 @@
             background-size: 10px 10px; z-index: 1;
         }
 
-        /* L'effet Dot Liquid Pulse qui remplit */
+        /* L'effet Liquid Pulse qui remplit // CORRECTION : JAUGE UNIE */
         #timerFill {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
             background-color: var(--neon-green);
@@ -180,8 +180,7 @@
         
         #timerDisplayBox.running #timerFill {
             animation: liquidPulse 2s infinite ease-in-out;
-            background-image: radial-gradient(#000 2px, transparent 2px);
-            background-size: 8px 8px;
+            /* background-image & background-size supprimés pour une jauge unie */
         }
 
         /* LE COMPTEUR CENTRAL // EFFET NÉGATIF */
@@ -193,13 +192,8 @@
             font-weight: bold;
             text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
             
-            /* --- L'ASTUCE DU JEEZ POUR LA LISIBILITÉ --- */
+            /* L'ASTUCE DU JEEZ POUR LA LISIBILITÉ */
             mix-blend-mode: difference; 
-            /* Explication tactique : 
-               - Texte Vert sur Fond Noir -> Reste Vert (Différence max).
-               - Texte Vert sur Fond Liquide Vert -> Devient Noir (Différence nulle).
-               Lisibilité parfaite garantie.
-            */
         }
 
         /* Animation Flash de fin (SILENCIEUX) */
@@ -211,7 +205,7 @@
             animation: flashEndSilent 0.3s infinite; /* Flash plus rapide */
         }
 
-        @keyframes liquidPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.8; } }    
+        @keyframes liquidPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.8; } }
 
     </style>
 </head>
@@ -362,7 +356,7 @@
     // INITIALISATION
     updateHUD();
 
-// --- MODULE 1 : CHRONO LOGIQUE SYSTÈME // SILENT // V3 ---
+// --- MODULE 1 : CHRONO LOGIQUE SYSTÈME // SILENT // JAUGE UNIE // V3.2 ---
     let restInterval;
     const timerBox = document.getElementById('timerDisplayBox');
     const timerFill = document.getElementById('timerFill');
