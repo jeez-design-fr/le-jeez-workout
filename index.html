@@ -80,7 +80,7 @@
             color: white; 
         }
 
-        /* CALCULATEUR HUD */
+        /* CALCULATEUR HUD & FAST BURN */
         .hud-box {
             border: 2px solid var(--neon-green);
             padding: 20px;
@@ -91,6 +91,9 @@
         }
 
         .hud-box::before { content: "WARMUP_MODULE"; position: absolute; top: -10px; right: 15px; background: var(--neon-green); color: black; font-size: 9px; padding: 2px 8px; }
+        
+        .hud-box.fast-burn { border-color: var(--neon-purple); }
+        .hud-box.fast-burn::before { content: "FAST_BURN_MODULE"; background: var(--neon-purple); }
 
         label { font-size: 0.8rem; color: var(--neon-purple); display: block; }
         input { width: 100%; background: transparent; border: none; border-bottom: 3px solid var(--neon-purple); color: var(--neon-green); font-size: 3.5rem; font-family: 'Syncopate', sans-serif; margin: 10px 0; outline: none; border-radius: 0; }
@@ -101,12 +104,18 @@
         th { color: var(--neon-purple); text-transform: uppercase; font-size: 0.65rem; border-bottom: 1px solid var(--neon-purple); padding: 8px 4px; }
         td { padding: 12px 4px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; }
 
-        /* CARBS */
-        .carbs-alert { margin-top: 30px; background: var(--neon-purple); color: white; padding: 30px 15px; clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%, 0 5%); }
-        .carbs-alert h2 { font-size: 1.8rem; margin-bottom: 15px; color: black; }
-        .food-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
-        .food-column h3 { color: var(--neon-green); font-size: 1.2rem; border-bottom: 3px solid black; padding-bottom: 5px; margin-bottom: 10px; text-shadow: 1px 1px 0px black; }
-        .list-item { border-left: 2px solid var(--neon-green); padding: 8px 10px; margin-bottom: 5px; font-size: 0.85rem; background: rgba(0,0,0,0.2); text-transform: uppercase; }
+        .instructions-box {
+            margin-top: 20px;
+            border: 2px dashed var(--neon-purple);
+            padding: 15px;
+            background: rgba(176, 38, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            display: none;
+        }
+        
+        .instructions-box span { color: var(--neon-green); font-weight: bold; }
 
     </style>
 </head>
@@ -136,14 +145,32 @@
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
+        
+        <div id="instructionsBox" class="instructions-box">
+            Fais <span>1 SEULE SERIE</span> par phase. <br><br>
+            Repos <span>60s</span> (Phase 1-3). <br>
+            Repos <span>120s</span> (Phase 4-5).
+        </div>
     </div>
 
-    <div class="carbs-alert">
-        <h2>CARB_RELOAD</h2>
-        <div class="food-grid">
-            <div class="food-column"><h3>SUCRÉ</h3><div id="listSucre"></div></div>
-            <div class="food-column"><h3>SALÉ</h3><div id="listSale"></div></div>
-            <div class="food-column"><h3>REPAS</h3><div id="listRepas"></div></div>
+    <div class="hud-box fast-burn">
+        <h3 style="color:var(--neon-purple); margin-top: 0; font-size: 1rem; border-left: 4px solid var(--neon-purple); padding-left: 10px;">FAST_BURN // 30MIN_MAX // TOP_8_CALORIE_KILLERS</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>EXO_MODE</th><th>INTENSITY / METHOD</th><th>GOAL</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>ASSAULT BIKE</td><td>HIIT: 10s SPRINT MAX / 50s COOL</td><td style="color:var(--neon-green)">12 MIN TOTAL</td></tr>
+                    <tr><td>BURPEES</td><td>AMRAP: 1 Min MAX REPS // 30s REPOS</td><td style="color:var(--neon-green)">5 ROUNDS</td></tr>
+                    <tr><td>KB SWINGS</td><td>HIIT: 40s ACTION / 20s REPOS</td><td style="color:var(--neon-green)">15 MIN TOTAL</td></tr>
+                    <tr><td>RAMEUR</td><td>HIIT: 30s SPRINTS MAX / 30s COOL</td><td style="color:var(--neon-green)">15 MIN TOTAL</td></tr>
+                    <tr><td>BOX JUMPS</td><td>HIIT: 45s ACTION (Tempo lent) / 15s REPOS</td><td style="color:var(--neon-green)">5 ROUNDS</td></tr>
+                    <tr><td>SLED PUSH</td><td>LOURD: Sprint 40m // Récup: Marche Retour</td><td style="color:var(--neon-green)">8 ALLER-RETOUR</td></tr>
+                    <tr><td>THRUSTERS KB/BAR</td><td>HIIT: 30s ACTION / 30s REPOS</td><td style="color:var(--neon-green)">10 MIN TOTAL</td></tr>
+                    <tr><td>BATTLE ROPES</td><td>HIIT: 45s ACTION / 15s REPOS</td><td style="color:var(--neon-green)">10 ROUNDS</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -156,17 +183,19 @@
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById('dateDisplay').innerText = now.toLocaleDateString('fr-FR', options).toUpperCase();
 
-        // Calcul du cycle (1 cycle = 42 jours / 6 semaines)
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-        const diff = now - startOfYear;
-        const oneDay = 1000 * 60 * 60 * 24;
-        const dayOfYear = Math.floor(diff / oneDay);
+        // Référence : Démarrage de la Phase 1 Stress (VASCULAR) DEMAIN Lundi 20 Avril 2026
+        const startDate = new Date(2026, 3, 20); // Avril est le mois 3
+        const diffInTime = now.getTime() - startDate.getTime();
+        const diffInDays = Math.floor(diffInTime / (1000 * 3600 * 24));
         
+        // Cycle length: 6 weeks = 42 days
         const cycleLength = 42;
-        const currentCycleNumber = Math.floor(dayOfYear / cycleLength) + 1;
-        const dayOfCycle = (dayOfYear % cycleLength) + 1;
+        // Cycle 1 starts on day 0
+        const currentCycleNumber = Math.floor(Math.max(0, diffInDays) / cycleLength) + 1;
+        const dayOfCycle = (Math.max(0, diffInDays) % cycleLength) + 1;
         const daysLeft = cycleLength - dayOfCycle;
 
+        // T1-T4 logic adjusted to start STRESS (VASCULAR) now
         const phases = [
             { type: "STRESS", name: "VASCULAR", desc: "🔥 15-25 REPS // POIDS LÉGER // REPOS COURTS // FOCUS BRÛLURE & ÉCHEC" },
             { type: "TENSION", name: "OVERLOAD 1", desc: "🧱 8-12 REPS // POIDS LOURD // REPOS LONGS // FOCUS TENSION MÉCANIQUE" },
@@ -174,26 +203,33 @@
             { type: "TENSION", name: "OVERLOAD 2", desc: "🧱 6-10 REPS // POIDS TRES LOURD // REPOS LONGS // FOCUS FORCE" },
             { type: "STRESS", name: "SHOCK", desc: "🔥 15-25 REPS // POIDS LÉGER // REPOS COURTS // FOCUS BRÛLURE & ÉCHEC" },
             { type: "TENSION", name: "CONSOLIDATION", desc: "🧱 10-12 REPS // POIDS LOURD // REPOS LONGS // FOCUS TENSION MÉCANIQUE" },
-            { type: "STRESS", name: "DELOAD", desc: "🔥 15-25 REPS // POIDS LÉGER // REPOS COURTS // FOCUS BRÛLURE & ÉCHEC" },
+            { type: "STRESS", name: "DELOAD_STRESS", desc: "🔥 15-25 REPS // POIDS TRES LÉGER // RÉCUPÉRATION SNC & TENDONS" },
             { type: "STRESS", name: "FINAL PUMP", desc: "🔥 20-30 REPS // POIDS LÉGER // REPOS COURTS // VOLUME MAXIMAL" }
         ];
 
-        // S'assurer de ne pas dépasser le tableau
+        // Ensure phase exists
         const currentPhase = phases[(currentCycleNumber - 1) % phases.length];
-
+        
         const container = document.getElementById('phaseContainer');
         const title = document.getElementById('phaseTitle');
         const info = document.getElementById('cycleInfo');
         const desc = document.getElementById('phaseDesc');
 
-        title.innerText = `PHASE: ${currentPhase.type}`;
-        info.innerText = `CYCLE ${currentCycleNumber} [${currentPhase.name}] // CHANGEMENT DANS ${daysLeft} JOURS`;
-        desc.innerText = currentPhase.desc;
-
-        if(currentPhase.type === "STRESS") {
-            container.classList.add('stress');
-        } else {
+        // Handling the pre-launch phase (today, Sunday) for Le Jeez to see.
+        if (diffInDays < 0) {
+            title.innerText = `PHASE: PREP_TENSION_DELOAD`;
+            info.innerText = `FIN DU CYCLE D'ÉCHAUFFEMENT // DÉMARRAGE STRESS_PHASE DEMAIN`;
+            desc.innerText = "🧱 DELOAD TECHNIQUE // SÉANCES TRÈS LÉGÈRES // REPOS SNC & TENDONS // DÉMARRAGE STRESS_PHASE DEMAIN.";
             container.classList.remove('stress');
+        } else {
+            title.innerText = `PHASE: ${currentPhase.type}`;
+            info.innerText = `CYCLE ${currentCycleNumber} [${currentPhase.name}] // CHANGEMENT DANS ${daysLeft} JOURS`;
+            desc.innerText = currentPhase.desc;
+            if(currentPhase.type === "STRESS") {
+                container.classList.add('stress');
+            } else {
+                container.classList.remove('stress');
+            }
         }
     }
 
@@ -211,17 +247,11 @@
         ];
         phases.forEach(ph => { tbody.innerHTML += `<tr><td>${ph.n}</td><td>${ph.p}</td><td style="color:var(--neon-green)">${ph.w}</td><td>${ph.r}</td></tr>`; });
         document.getElementById('warmupTable').style.display = 'table';
+        document.getElementById('instructionsBox').style.display = 'block';
     }
 
-    // --- 3. NUTRITION LISTS ---
-    const dSucre = ["BOL AVOINE BANANE", "MUESLI FRUITS", "PUDDING CHIA", "BANANE MIEL NOIX"];
-    const dSale = ["WRAPS POULET", "SANDWICH DINDE", "OMELETTE", "BAGEL AVOCAT"];
-    const dRepas = ["RIZ POULET CURRY", "PATES BOLOGNAISE", "PATATE DOUCE FOUR", "PATES PESTO"];
-    function popList(id, arr) { arr.forEach((item, i) => { document.getElementById(id).innerHTML += `<div class="list-item">${item}</div>`; }); }
-    
     // INITIALISATION
     updateHUD();
-    popList('listSucre', dSucre); popList('listSale', dSale); popList('listRepas', dRepas);
 </script>
 </body>
 </html>
