@@ -117,26 +117,40 @@
         
         .instructions-box span { color: var(--neon-green); font-weight: bold; }
 
-        /* MODULE 1 : CHRONO REST // STYLISÉ CYBERPUNK */
+    /* MODULE 1 : CHRONO REST // STYLISÉ CYBERPUNK // V3 */
         .hud-box.timer {
             border-color: var(--neon-purple);
             padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 0 15px rgba(176, 38, 255, 0.2);
         }
-        .hud-box.timer::before { content: "REST_CHRONO"; background: var(--neon-purple); }
+        .hud-box.timer::before { content: "REST_CHRONO_SILENT"; background: var(--neon-purple); }
 
-        .timer-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        /* Grille ajustée : 2 gros boutons + 1 petit Reset [X] */
+        .timer-btn-group { 
+            display: grid; 
+            grid-template-columns: 2fr 2fr 1fr; 
+            gap: 10px; 
+            margin-bottom: 15px; 
+        }
         
         .timer-btn {
             background: rgba(176, 38, 255, 0.1);
             color: var(--neon-purple);
             border: 2px solid var(--neon-purple);
             padding: 12px; font-weight: bold; font-family: 'Syncopate', sans-serif;
-            text-transform: uppercase; font-size: 0.8rem; transition: 0.2s;
+            text-transform: uppercase; font-size: 0.8rem; transition: 0.1s;
         }
         .timer-btn:active { background: var(--neon-purple); color: black; }
         .timer-btn.active { background: var(--neon-purple); color: black; box-shadow: 0 0 10px var(--neon-purple); }
+
+        /* Bouton Reset spécifique */
+        .timer-btn.reset {
+            border-color: rgba(57, 255, 20, 0.3);
+            color: rgba(57, 255, 20, 0.5);
+            background: transparent;
+        }
+        .timer-btn.reset:active { background: #fff; color: #000; border-color: #fff; }
 
         /* LA BOX CHRONO CENTRALE */
         #timerDisplayBox {
@@ -159,49 +173,45 @@
         #timerFill {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
             background-color: var(--neon-green);
-            opacity: 0.6;
+            opacity: 0.7; /* Opacité augmentée pour le contraste */
             z-index: 2;
-            transition: height 1s linear; /* Mouvement fluide */
+            transition: height 1s linear;
         }
         
-        /* Animation Pulse quand actif */
         #timerDisplayBox.running #timerFill {
             animation: liquidPulse 2s infinite ease-in-out;
             background-image: radial-gradient(#000 2px, transparent 2px);
-            background-size: 8px 8px; /* Texture dot dans le liquide */
+            background-size: 8px 8px;
         }
 
-        /* Le compteur central */
+        /* LE COMPTEUR CENTRAL // EFFET NÉGATIF */
         #timerNumber {
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-family: 'Syncopate', sans-serif;
-            color: var(--neon-green);
-            z-index: 3; /* Au-dessus de tout */
-            text-shadow: 0 0 15px var(--neon-green);
+            color: var(--neon-green); /* Couleur de base */
+            z-index: 3;
             font-weight: bold;
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+            
+            /* --- L'ASTUCE DU JEEZ POUR LA LISIBILITÉ --- */
+            mix-blend-mode: difference; 
+            /* Explication tactique : 
+               - Texte Vert sur Fond Noir -> Reste Vert (Différence max).
+               - Texte Vert sur Fond Liquide Vert -> Devient Noir (Différence nulle).
+               Lisibilité parfaite garantie.
+            */
         }
 
-        /* Animation Flash de fin */
-        @keyframes flashEnd {
-            0%, 100% { border-color: #1a1a1a; box-shadow: none; }
-            50% { border-color: var(--neon-green); box-shadow: 0 0 30px var(--neon-green); }
+        /* Animation Flash de fin (SILENCIEUX) */
+        @keyframes flashEndSilent {
+            0%, 100% { border-color: #1a1a1a; background: #000; }
+            50% { border-color: var(--neon-green); background: rgba(57, 255, 20, 0.2); }
         }
         #timerDisplayBox.finished {
-            animation: flashEnd 0.5s infinite;
-        }
-        #timerDisplayBox.finished #timerNumber {
-            color: #fff;
-            animation: pulseText 0.5s infinite;
+            animation: flashEndSilent 0.3s infinite; /* Flash plus rapide */
         }
 
-        @keyframes liquidPulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 0.8; }
-        }
-        @keyframes pulseText {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.05); }
-        }
+        @keyframes liquidPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.8; } }    
 
     </style>
 </head>
@@ -216,8 +226,9 @@
 
     <div class="hud-box timer">
         <div class="timer-btn-group">
-            <button class="timer-btn" id="btn60" onclick="startTimer(60, this)">REPOS_60S</button>
-            <button class="timer-btn" id="btn120" onclick="startTimer(120, this)">REPOS_120S</button>
+            <button class="timer-btn" id="btn60" onclick="startTimer(60, this)">60S</button>
+            <button class="timer-btn" id="btn120" onclick="startTimer(120, this)">120S</button>
+            <button class="timer-btn reset" onclick="resetTimer()">[X]</button>
         </div>
 
         <div id="timerDisplayBox">
@@ -351,18 +362,17 @@
     // INITIALISATION
     updateHUD();
 
-// --- MODULE 1 : CHRONO LOGIQUE SYSTÈME ---
+// --- MODULE 1 : CHRONO LOGIQUE SYSTÈME // SILENT // V3 ---
     let restInterval;
     const timerBox = document.getElementById('timerDisplayBox');
     const timerFill = document.getElementById('timerFill');
     const timerNum = document.getElementById('timerNumber');
-    const audioFlash = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'); // Bip optionnel mais utile
+
+    // PLUS AUCUNE RÉFÉRENCE AUDIO ICI. LE SILENCE EST TOTAL.
 
     function startTimer(seconds, buttonClicked) {
-        // 1. Nettoyage
-        clearInterval(restInterval);
-        timerBox.classList.remove('finished', 'running');
-        document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+        // 1. Reset interne rapide avant de lancer
+        cleanChronoState();
         
         // 2. Activation visuelle
         buttonClicked.classList.add('active');
@@ -382,20 +392,33 @@
                 timerBox.classList.add('finished');
                 buttonClicked.classList.remove('active');
                 
-                // Audio et Flash
-                try { audioFlash.play(); } catch(e) {} // Joue le son si permis par le navigateur
+                // UNIQUEMENT LE FLASH VISUEL DE FIN.
                 
-                // Arrêt automatique du flash après 10s pour préserver le système
-                setTimeout(() => { timerBox.classList.remove('finished'); }, 10000); 
+                // Arrêt automatique du flash après 15s
+                setTimeout(() => { timerBox.classList.remove('finished'); }, 15000); 
             }
         }, 1000);
+    }
+
+    // Fonction de remise à zéro manuelle
+    function resetTimer() {
+        cleanChronoState();
+    }
+
+    // Nettoie tous les intervalles et états visuels
+    function cleanChronoState() {
+        clearInterval(restInterval);
+        timerBox.classList.remove('finished', 'running');
+        timerFill.style.height = '0%';
+        timerNum.innerText = '00';
+        document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
     }
 
     function updateTimerDisplay(time, total) {
         // Mise à jour du chiffre
         timerNum.innerText = time.toString().padStart(2, '0');
         
-        // Mise à jour du remplissage liquide (pourcentage)
+        // Mise à jour du remplissage liquide (pourcentage inversé pour mix-blend-mode)
         const percentage = ((total - time) / total) * 100;
         timerFill.style.height = `${percentage}%`;
     }
